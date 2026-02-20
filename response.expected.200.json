@@ -1,0 +1,25 @@
+{
+  "messageHeader": {
+    "messageType": "ADT^A01",
+    "messageControlId": "MSG00001",
+    "hl7Version": "2.5"
+  },
+  "patient": {
+    "patientId": "123456",
+    "firstName": "John",
+    "lastName": "Doe",
+    "dateOfBirth": "1980-01-01",
+    "gender": "M",
+    "phoneNumber": "555-123-4567"
+  },
+  "visit": {
+    "patientClass": "I",
+    "location": "2000-2012-01",
+    "attendingDoctor": {
+      "doctorId": "1234",
+      "firstName": "Adam",
+      "lastName": "Smith"
+    }
+  },
+  "status": "Decoded to HL7 XML Successfully"
+}

@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "LogicApp HL7 ADT A01 - Local",
+    "_postman_id": "b2d5c813-6d39-4b41-9f68-0a3b2f5a1f6a",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST HL7 ADT^A01",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:7071/api/Hl7AdtA01ToJson/triggers/When_a_HTTP_request_is_received/invoke?api-version=2016-06-01",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "7071",
+          "path": [
+            "api",
+            "Hl7AdtA01ToJson",
+            "triggers",
+            "When_a_HTTP_request_is_received",
+            "invoke"
+          ],
+          "query": [
+            {
+              "key": "api-version",
+              "value": "2016-06-01"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hl7\": \"MSH|^~\\\\&|ADT1|GOOD HEALTH HOSPITAL|EHR|HOSPITAL|202401011200||ADT^A01|MSG00001|P|2.5\\nPID|1||123456^^^HOSPITAL^MR||Doe^John||19800101|M|||123 Main St^^Metropolis^NY^10001||555-123-4567\\nPV1|1|I|2000-2012-01||||1234^Smith^Adam\\n\"\n}"
+        }
+      }
+    }
+  ]
+}

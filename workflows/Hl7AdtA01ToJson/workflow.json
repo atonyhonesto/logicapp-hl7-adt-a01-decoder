@@ -1,0 +1,502 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "triggers": {
+      "When_a_HTTP_request_is_received": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "hl7": {
+                "type": "string",
+                "description": "Raw HL7 message as a single string (segment delimiter = \\n or \\r)."
+              }
+            },
+            "required": [
+              "hl7"
+            ]
+          }
+        }
+      }
+    },
+    "actions": {
+      "Decode_HL7": {
+        "type": "HL7Decode",
+        "inputs": {
+                    "messageToDecode": "@{triggerBody()}\r"
+                },
+                "runAfter": {}
+            },
+      "Compose_HL7_Xml": {
+        "type": "Compose",
+        "inputs": "@body('Decode_HL7')?['message']",
+        "runAfter": {
+          "Decode_HL7": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Initialize_errors": {
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "errors",
+              "type": "array",
+              "value": []
+            }
+          ]
+        },
+        "runAfter": {
+          "Compose_HL7_Xml": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_msh_messageType": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"MSH\"]/*[local-name()=\"MSH.9\"])'))",
+        "runAfter": {
+          "Initialize_errors": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_msh_controlId": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"MSH\"]/*[local-name()=\"MSH.10\"])'))",
+        "runAfter": {
+          "Set_msh_messageType": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_msh_version": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"MSH\"]/*[local-name()=\"MSH.12\"])'))",
+        "runAfter": {
+          "Set_msh_controlId": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_patientId": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.3\"]/*[local-name()=\"CX.1\"][1])'))",
+        "runAfter": {
+          "Set_msh_version": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_lastName": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.5\"]/*[local-name()=\"XPN.1\"]/*[local-name()=\"FN.1\"][1])'))",
+        "runAfter": {
+          "Set_pid_patientId": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_firstName": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.5\"]/*[local-name()=\"XPN.2\"][1])'))",
+        "runAfter": {
+          "Set_pid_lastName": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_dob": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.7\"][1])'))",
+        "runAfter": {
+          "Set_pid_firstName": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_gender": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.8\"][1])'))",
+        "runAfter": {
+          "Set_pid_dob": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pid_phone": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PID\"]/*[local-name()=\"PID.13\"]/*[local-name()=\"XTN.1\"][1])'))",
+        "runAfter": {
+          "Set_pid_gender": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pv1_patientClass": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PV1\"]/*[local-name()=\"PV1.2\"][1])'))",
+        "runAfter": {
+          "Set_pid_phone": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pv1_location": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PV1\"]/*[local-name()=\"PV1.3\"][1])'))",
+        "runAfter": {
+          "Set_pv1_patientClass": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pv1_docId": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PV1\"]/*[local-name()=\"PV1.7\"]/*[local-name()=\"XCN.1\"][1])'))",
+        "runAfter": {
+          "Set_pv1_location": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pv1_docLast": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PV1\"]/*[local-name()=\"PV1.7\"]/*[local-name()=\"XCN.2\"][1])'))",
+        "runAfter": {
+          "Set_pv1_docId": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Set_pv1_docFirst": {
+        "type": "Compose",
+        "inputs": "@string(xpath(xml(outputs('Compose_HL7_Xml')), 'string(//*[local-name()=\"PV1\"]/*[local-name()=\"PV1.7\"]/*[local-name()=\"XCN.3\"][1])'))",
+        "runAfter": {
+          "Set_pv1_docLast": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Validate_required_fields": {
+        "type": "Scope",
+        "actions": {
+          "Check_messageType": {
+            "type": "If",
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_msh_messageType'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_messageType": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: MSH.9 (Message Type)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_controlId": {
+            "type": "If",
+            "runAfter": {
+              "Check_messageType": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_msh_controlId'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_controlId": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: MSH.10 (Message Control ID)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_version": {
+            "type": "If",
+            "runAfter": {
+              "Check_controlId": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_msh_version'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_version": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: MSH.12 (HL7 Version)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_patientId": {
+            "type": "If",
+            "runAfter": {
+              "Check_version": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pid_patientId'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_patientId": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: PID.3 (Patient ID)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_patientName": {
+            "type": "If",
+            "runAfter": {
+              "Check_patientId": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pid_lastName'))",
+                    true
+                  ]
+                },
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pid_firstName'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_patientName": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field(s): PID.5.1/PID.5.2 (Patient Last/First Name)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_dob": {
+            "type": "If",
+            "runAfter": {
+              "Check_patientName": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pid_dob'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_dob": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: PID.7 (Date of Birth)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_gender": {
+            "type": "If",
+            "runAfter": {
+              "Check_dob": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pid_gender'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_gender": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: PID.8 (Gender)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          },
+          "Check_patientClass": {
+            "type": "If",
+            "runAfter": {
+              "Check_gender": [
+                "Succeeded"
+              ]
+            },
+            "expression": {
+              "or": [
+                {
+                  "equals": [
+                    "@empty(outputs('Set_pv1_patientClass'))",
+                    true
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Append_error_patientClass": {
+                "type": "AppendToArrayVariable",
+                "inputs": {
+                  "name": "errors",
+                  "value": "Missing required field: PV1.2 (Patient Class)"
+                }
+              }
+            },
+            "else": {
+              "actions": {}
+            }
+          }
+        },
+        "runAfter": {
+          "Set_pv1_docFirst": [
+            "Succeeded"
+          ]
+        }
+      },
+      "If_validation_failed": {
+        "type": "If",
+        "expression": {
+          "greater": [
+            "@length(variables('errors'))",
+            0
+          ]
+        },
+        "actions": {
+          "Response_400": {
+            "type": "Response",
+            "inputs": {
+              "statusCode": 400,
+              "body": {
+                "status": "ValidationFailed",
+                "errors": "@variables('errors')"
+              }
+            }
+          }
+        },
+        "else": {
+          "actions": {
+            "Response_200": {
+              "type": "Response",
+              "inputs": {
+                "statusCode": 200,
+                "body": {
+                  "messageHeader": {
+                    "messageType": "@outputs('Set_msh_messageType')",
+                    "messageControlId": "@outputs('Set_msh_controlId')",
+                    "hl7Version": "@outputs('Set_msh_version')"
+                  },
+                  "patient": {
+                    "patientId": "@outputs('Set_pid_patientId')",
+                    "firstName": "@outputs('Set_pid_firstName')",
+                    "lastName": "@outputs('Set_pid_lastName')",
+                    "dateOfBirth": "@if(equals(length(outputs('Set_pid_dob')),8), concat(substring(outputs('Set_pid_dob'),0,4),'-',substring(outputs('Set_pid_dob'),4,2),'-',substring(outputs('Set_pid_dob'),6,2)), outputs('Set_pid_dob'))",
+                    "gender": "@outputs('Set_pid_gender')",
+                    "phoneNumber": "@outputs('Set_pid_phone')"
+                  },
+                  "visit": {
+                    "patientClass": "@outputs('Set_pv1_patientClass')",
+                    "location": "@outputs('Set_pv1_location')",
+                    "attendingDoctor": {
+                      "doctorId": "@outputs('Set_pv1_docId')",
+                      "firstName": "@outputs('Set_pv1_docFirst')",
+                      "lastName": "@outputs('Set_pv1_docLast')"
+                    }
+                  },
+                  "status": "Decoded to HL7 XML Successfully"
+                }
+              }
+            }
+          }
+        },
+        "runAfter": {
+          "Validate_required_fields": [
+            "Succeeded"
+          ]
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "kind": "Stateful"
+}

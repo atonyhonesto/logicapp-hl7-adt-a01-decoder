@@ -1,0 +1,13 @@
+{
+  "serviceProviderConnections": {
+    "hl7": {
+      "parameterValues": {
+        "integrationAccountResourceId": ""
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/hl7"
+      },
+      "displayName": "HL7 (Built-in)"
+    }
+  }
+}
